@@ -1,0 +1,36 @@
+spring:
+  # 数据库的连接信息
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/regustrationmanagementdb
+    username: root
+    password: 123456
+    # 文件上传的配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+  web:
+    resources:
+      static-locations: classpath:/static/
+      logging:
+        level:
+          org:
+            springframework:
+              web: DEBUG
+mybatis:
+  # Mybatis
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+#阿里云
+aliyun:
+  oss:
+    endpoint: https://oss-cn-shenzhen.aliyuncs.com
+    accessKeyId: LTAI5tS8CUcwd7Gtw5XpBrvW
+    accessKeySecret: K9d31a5FrFrb38TuFCZFggYPacPhMz
+    bucketName: web-tlias-ak
+#spring事务管理日志
+logging:
+  level:
+    org.springframework.jdbc.support.JdbcTransactionManager: debug

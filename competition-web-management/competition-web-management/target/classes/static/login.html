@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>比赛报名管理系统登录界面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .login-form h2 {
+            text-align: center;
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .login-form .register-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <form class="login-form" action="/users/login" method="POST">
+        <h2>用户登录</h2>
+        <input type="text" name="username" placeholder="用户名" required>
+        <input type="password" name="password" placeholder="密码" required>
+        <button type="submit">登录</button>
+        <div class="register-link">
+            还没有账号？<a href="register.html">点击注册</a>
+        </div>
+    </form>
+</div>
+<script src="/js/axios.min.js"></script>
+<script>
+    document.querySelector('.login-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const username = document.querySelector('input[name="username"]').value;
+        const password = document.querySelector('input[name="password"]').value;
+
+        axios.post('/users/login', {username, password})
+            .then(response => {
+                const data = response.data;
+                if (data.code === 1) {
+                    const token = data.data;
+
+                    localStorage.setItem('token', token);
+
+                    window.location.href = 'HomePage.html';
+                } else {
+                    alert('登录失败，请检查用户名和密码');
+                }
+            })
+            .catch(error => {
+                console.error('请求失败', error);
+                if (error.response && error.response.status === 401) {
+                    alert('未登录或登录失效，请重新登录');
+                } else {
+                    alert('请求失败');
+                }
+            });
+    });
+
+    axios.interceptors.request.use(function (config) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+</script>
+</body>
+</html>

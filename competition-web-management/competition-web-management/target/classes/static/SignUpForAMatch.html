@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报名比赛</title>
+    <style>
+        .logo {
+            text-align: center;
+        }
+        .tiaozhuan {
+            text-align: center;
+        }
+        li {
+            list-style: none;
+        }
+        .title-list {
+            text-align: center;
+            position: relative;
+            left: 17px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">
+        <img src="展示图.jpg" width="400" height="500" alt="系统logo">
+    </div>
+    <nav>
+        <ul class="tiaozhuan">
+            <li><a href="HomePage.html">首页</a></li>
+            <li><a href="PersonalCenter.html">个人中心</a></li>
+            <li><a href="CompetitionManage.html">比赛管理</a></li>
+        </ul>
+    </nav>
+</header>
+<main>
+    <h1 class="title-list">比赛列表</h1>
+    <div class="title-list">
+        <button onclick="getCompetitionsAsc()" aria-label="按开始时间升序获取比赛列表">按开始时间升序</button>
+        <button onclick="getCompetitionsDesc()" aria-label="按开始时间降序获取比赛列表">按开始时间降序</button>
+    </div>
+    <table style="margin: 0 auto">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>介绍</th>
+            <th>赞助商</th>
+            <th>类型</th>
+            <th>报名人数</th>
+            <th>开始时间</th>
+            <th>状态</th>
+            <th>结束时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="competitionList">
+        <!-- 这里使用 JavaScript 动态生成比赛列表 -->
+        </tbody>
+    </table>
+</main>
+<script src="/js/axios.min.js"></script>
+<script>
+    // 获取Token
+    var token = localStorage.getItem('token');
+    function isValidToken(token) {
+        return token && token !== '';
+    }
+    // 设置Axios全局请求拦截器
+    axios.interceptors.request.use(function (config) {
+        if (isValidToken(token)) {
+            // 添加Token
+            config.headers.Authorization = token;
+        } else {
+            console.log("获取请求头失败");
+        }
+        return config;
+    }, function (error) {
+        return Promise.reject(error);
+    });
+    axios.interceptors.response.use(response => {
+        return response;
+    }, error => {
+        if (error.response && error.response.status === 401) {
+            console.log("认证失败");
+        }
+        return Promise.reject(error);
+    });
+    window.onload = async function () {
+        try {
+            const response = await axios.get('/competitions');
+            const competitions = response.data.data;
+            renderCompetitionList(competitions);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    // 渲染比赛列表的函数
+    function renderCompetitionList(competitions) {
+        const competitionList = document.getElementById('competitionList');
+        competitionList.innerHTML = '';
+        competitions.forEach(function (competition) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${competition.id}</td>
+                <td>${competition.name}</td>
+                <td>${competition.introduction}</td>
+                <td>${competition.sponsor}</td>
+                <td>${competition.type}</td>
+                <td>${competition.registeredPeople}</td>
+                <td>${competition.startTime}</td>
+                <td>${competition.status}</td>
+                <td>${competition.endTime}</td>
+                <td>
+                    <button class="signupButton" data-competition-id="${competition.id}" aria-label="Sign up for competition">报名比赛</button>
+                    <button onclick="signdownCompetition(${competition.id})" aria-label="Sign down from competition">取消报名</button>
+                </td>
+            `;
+            competitionList.appendChild(row);
+        });
+        document.querySelectorAll('.signupButton').forEach(button => {
+            button.addEventListener('click', function () {
+                const competitionId = this.dataset.competitionId;
+                signupCompetition(competitionId);
+            });
+        });
+    }
+    function signupCompetition(competitionId) {
+        axios.post(`/competitions/signUp/${competitionId}`)
+            .then(function (response) {
+                alert(`报名请求发送成功，响应为:\n${JSON.stringify(response.data.data)}`);
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+                alert('参加比赛的请求错误');
+            });
+    }
+    function signdownCompetition(competitionId) {
+        axios.delete(`/competitions/signDown/${competitionId}`)
+            .then(function (response) {
+                if (response.data.code === 1) {
+                    alert(`取消报名成功`);
+                } else {
+                    alert(`你没有参加该比赛`);
+                }
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+                alert('请求错误');
+            });
+    }
+    function getCompetitionsAsc() {
+        axios.get('/competitions/asc')
+            .then(function (response) {
+                const competitions = response.data;
+                renderCompetitionList(competitions);
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+                alert('获取比赛列表失败');
+            });
+    }
+    function getCompetitionsDesc() {
+        axios.get('/competitions/desc')
+            .then(function (response) {
+                const competitions = response.data;
+                renderCompetitionList(competitions);
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+                alert('获取比赛列表失败');
+            });
+    }
+</script>
+</body>
+</html>

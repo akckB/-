@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理比赛</title>
+</head>
+<body>
+<div class="logo">
+    <img src="展示图.jpg" width="400" height="500" alt="系统logo">
+</div>
+<ul>
+    <li><a href="HomePage.html">首页</a></li>
+    <li><a href="SignUpForAMatch.html">参加比赛</a></li>
+    <li><a href="PersonalCenter.html">个人中心</a></li>
+</ul>
+<h1>比赛管理</h1>
+
+<!-- 比赛列表 -->
+<h2>比赛列表</h2>
+<table>
+    <tr>
+        <th>比赛ID</th>
+        <th>比赛名称</th>
+        <th>图像URL</th>
+        <th>比赛简介</th>
+        <th>主办方</th>
+        <th>比赛类型</th>
+        <th>参赛名额</th>
+        <th>已报名人数</th>
+        <th>报名开始时间</th>
+        <th>比赛状态</th>
+        <th>报名结束时间</th>
+        <th>创建时间</th>
+        <th>修改时间</th>
+        <th>操作</th>
+    </tr>
+    <tbody id="competitionList">
+    <!-- 比赛列表数据将动态添加到这里 -->
+    </tbody>
+</table>
+
+<!-- 添加比赛 -->
+<h2>添加比赛</h2>
+<form id="addCompetitionForm">
+    <label for="name">比赛名称:</label>
+    <input type="text" id="name" name="name"><br><br>
+    <label for="img">图像URL:</label>
+    <input type="text" id="img" name="img"><br><br>
+    <label for="introduction">比赛简介:</label>
+    <textarea id="introduction" name="introduction"></textarea><br><br>
+    <label for="sponsor">主办方:</label>
+    <input type="text" id="sponsor" name="sponsor"><br><br>
+    <label for="type">比赛类型:</label>
+    <select id="type" name="type">
+        <option value="团队赛">团体赛</option>
+        <option value="个人赛">个人赛</option>
+    </select><br><br>
+    <label for="entryQuota">参赛名额:</label>
+    <input type="number" id="entryQuota" name="entryQuota"><br><br>
+    <label for="registeredPeople">已报名人数:</label>
+    <input type="number" id="registeredPeople" name="registeredPeople" readonly><br><br>
+    <label for="startTime">报名开始时间:</label>
+    <input type="date" id="startTime" name="startTime"><br><br>
+    <label for="status">比赛状态:</label>
+    <select id="status" name="status">
+        <option value="正在报名">正在报名</option>
+        <option value="已截止">已截止</option>
+        <option value="未开始">未开始</option>
+    </select><br><br>
+    <label for="endTime">报名结束时间:</label>
+    <input type="date" id="endTime" name="endTime"><br><br>
+    <input type="submit" value="添加比赛">
+</form>
+
+<!-- 编辑比赛的模态框 -->
+<div id="editCompetitionModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>编辑比赛</h2>
+        <form id="editCompetitionForm">
+            <input type="hidden" id="editCompetitionId" name="id">
+            <label for="editName">比赛名称:</label>
+            <input type="text" id="editName" name="name"><br><br>
+            <label for="editImg">图像URL:</label>
+            <input type="text" id="editImg" name="img"><br><br>
+            <label for="editIntroduction">比赛简介:</label>
+            <textarea id="editIntroduction" name="introduction"></textarea><br><br>
+            <label for="editSponsor">主办方:</label>
+            <input type="text" id="editSponsor" name="sponsor"><br><br>
+            <label for="editType">比赛类型:</label>
+            <select id="editType" name="type">
+                <option value="团体赛">团体赛</option>
+                <option value="个人赛">个人赛</option>
+            </select><br><br>
+            <label for="editEntryQuota">参赛名额:</label>
+            <input type="number" id="editEntryQuota" name="entryQuota"><br><br>
+            <label for="editRegisteredPeople">已报名人数:</label>
+            <input type="number" id="editRegisteredPeople" name="registeredPeople"><br><br>
+            <label for="editStartTime">报名开始时间:</label>
+            <input type="date" id="editStartTime" name="startTime"><br><br>
+            <label for="editStatus">比赛状态:</label>
+            <select id="editStatus" name="status">
+                <option value="进行中">进行中</option>
+                <option value="已截止">已截止</option>
+                <option value="未开始">未开始</option>
+            </select><br><br>
+            <label for="editEndTime">报名结束时间:</label>
+            <input type="date" id="editEndTime" name="endTime"><br><br>
+            <input type="submit" value="保存修改">
+        </form>
+    </div>
+</div>
+
+<script src="/js/axios.min.js"></script>
+<script>
+    // 获取Token
+    var token = localStorage.getItem('token');
+
+    function isValidToken(token) {
+        return token && token !== '';
+    }
+
+    axios.interceptors.request.use(function (config) {
+        if (isValidToken(token)) {
+            config.headers.Authorization = token;
+        }
+        return config;
+    }, function (error) {
+        return Promise.reject(error);
+    });
+
+    axios.interceptors.response.use(response => {
+        return response;
+    }, error => {
+        if (error.response && error.response.status === 401) {
+            alert('未登录或登录失效，请重新登录');
+            window.location.replace('登录页面的URL');
+        }
+        return Promise.reject(error);
+    });
+
+    // 获取比赛列表的函数
+    function getCompetitionList() {
+        axios.get('/competitions')
+            .then(function (response) {
+                var competitions = response.data.data;
+                var competitionList = document.getElementById('competitionList');
+                competitionList.innerHTML = '';
+                competitions.forEach(function (competition) {
+                    var row = document.createElement('tr');
+                    row.innerHTML = `
+                            <td>${competition.id}</td>
+                            <td>${competition.name}</td>
+                            <td>${competition.img}</td>
+                            <td>${competition.introduction}</td>
+                            <td>${competition.sponsor}</td>
+                            <td>${competition.type}</td>
+                            <td>${competition.entryQuota}</td>
+                            <td>${competition.registeredPeople}</td>
+                            <td>${competition.startTime}</td>
+                            <td>${competition.status}</td>
+                            <td>${competition.endTime}</td>
+                            <td>${competition.createTime}</td>
+                            <td>${competition.updateTime}</td>
+                            <td>
+                                <button onclick="editCompetition(${competition.id}) ">编辑</button>
+                                <button onclick="deleteCompetition(${competition.id})">删除</button>
+                            </td>`;
+                    competitionList.appendChild(row);
+                });
+            })
+            .catch(function (error) {
+                alert(error);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('addCompetitionForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // 防止默认提交
+            var formData = {
+                name: document.getElementById('name').value,
+                img: document.getElementById('img').value,
+                introduction: document.getElementById('introduction').value,
+                sponsor: document.getElementById('sponsor').value,
+                type: document.getElementById('type').value,
+                entryQuota: document.getElementById('entryQuota').value,
+                registeredPeople: document.getElementById('registeredPeople').value,
+                startTime: document.getElementById('startTime').value,
+                status: document.getElementById('status').value,
+                endTime: document.getElementById('endTime').value
+            };
+
+            axios.post('/competitions', formData)
+                .then(function (response) {
+                    alert('请求发送成功:' + response.data.data);
+                    getCompetitionList();// 刷新
+                })
+                .catch(function (error) {
+                    alert('新增比赛失败:', error.data.data);
+                });
+        });
+
+        getCompetitionList();
+    });
+
+    function editCompetition(competitionId) {
+        // 获取比赛信息并填充到模态框中
+        axios.get(`/competitions/${competitionId}`)
+            .then(function (response) {
+                var competition = response.data.data;
+                document.getElementById('editCompetitionId').value = competition.id; 
+                document.getElementById('editName').value = competition.name;
+                document.getElementById('editImg').value = competition.image || '';
+                document.getElementById('editIntroduction').value = competition.introduction;
+                document.getElementById('editSponsor').value = competition.sponsor;
+                document.getElementById('editType').value = competition.type;
+                document.getElementById('editEntryQuota').value = competition.entryQuota;
+                document.getElementById('editRegisteredPeople').value = competition.registeredPeople;
+                document.getElementById('editStartTime').value = competition.startTime;
+                document.getElementById('editStatus').value = competition.status;
+                document.getElementById('editEndTime').value = competition.endTime;
+                document.getElementById('editCompetitionModal').style.display = 'block';
+            })
+            .catch(function (error) {
+                alert('获取比赛信息时出错:' + error);
+            });
+    }
+
+    document.getElementById('editCompetitionForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var competitionId = document.getElementById('editCompetitionId').value;
+
+        var formData = {
+            id: competitionId,
+            name: document.getElementById('editName').value,
+            img: document.getElementById('editImg').value,
+            introduction: document.getElementById('editIntroduction').value,
+            sponsor: document.getElementById('editSponsor').value,
+            type: document.getElementById('editType').value,
+            entryQuota: document.getElementById('editEntryQuota').value,
+            registeredPeople: document.getElementById('editRegisteredPeople').value,
+            startTime: document.getElementById('editStartTime').value,
+            status: document.getElementById('editStatus').value,
+            endTime: document.getElementById('editEndTime').value
+        };
+
+        axios.put(`/competitions`, formData, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(function (response) {
+                alert('请求发送成功:' + response.data.data);
+                closeEditModal();
+            })
+            .catch(function (error) {
+                alert('比赛信息修改失败:' + error);
+            });
+    });
+    function closeEditModal() {// 关模态框
+        document.getElementById('editCompetitionModal').style.display = 'none';
+    }
+
+    // 删除比赛
+    function deleteCompetition(competitionId) {
+        axios.delete(`/competitions/${competitionId}`)
+            .then(function (response) {
+                alert("请求发送成功：" + response.data.data);
+                getCompetitionList();
+            })
+            .catch(function (error) {
+                alert(error);
+            });
+    }
+</script>
+</body>
+</html>

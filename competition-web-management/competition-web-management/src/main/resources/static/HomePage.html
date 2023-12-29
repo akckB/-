@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        nav {
+            background-color: #f4f4f4;
+            padding: 10px;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav ul li {
+            margin: 0 10px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        nav ul li a {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 10px;
+            text-decoration: none;
+            border: 1px solid #ccc;
+        }
+
+        nav ul li a:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+<header>
+    <h1>欢迎来到比赛管理系统</h1>
+</header>
+<nav>
+    <ul>
+        <li><a href="SignUpForAMatch.html">参加比赛</a></li>
+        <li><a href="PersonalCenter.html">个人中心</a></li>
+        <li><a href="CompetitionManage.html">管理比赛</a></li>
+        <li><a href="login.html">返回登录界面</a></li>
+    </ul>
+</nav>
+<main>
+    <form id="competitionQueryForm">
+        <label for="competitionId">输入比赛ID：</label>
+        <input type="number" id="competitionId" name="competitionId" required>
+        <button type="button" onclick="queryCompetition()">查询</button>
+    </form>
+    <div id="competitionResult"></div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <label for="competitionName">比赛名称：</label>
+    <input type="text" id="competitionName" placeholder="请输入比赛名称">
+    <button onclick="queryCompetition1()">查询</button>
+    <div id="competitionResults"></div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <label for="competitionName">主办方名称：</label>
+    <input type="text" id="sponsorName" placeholder="输入主办方名称">
+    <button onclick="queryCompetitionBySponsor()">查询</button>
+    <div id="competitionResultss"></div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+</main>
+<footer>
+    &copy; 2023 比赛管理系统
+</footer>
+<script src="/js/axios.min.js"></script>
+<script>
+    var token = localStorage.getItem('token');
+
+    function isValidToken(token) {
+        return token && token !== '';
+    }
+
+    // 设置Axios全局请求拦截器
+    axios.interceptors.request.use(function (config) {
+        if (isValidToken(token)) {
+            config.headers.Authorization = token;
+        } else {
+        }
+        return config;
+    }, function (error) {
+        return Promise.reject(error);
+    });
+    // 根据比赛id查询
+    function queryCompetition() {
+        var competitionId = document.getElementById('competitionId').value;
+        axios.get('/competitions/' + competitionId)
+            .then(function (response) {
+                var resultContainer = document.getElementById('competitionResult');
+                resultContainer.innerHTML = JSON.stringify(response.data.data);
+            })
+            .catch(function (error) {
+                console.error('查询失败', error);
+            });
+    }
+
+    // 根据比赛名称查询
+    function queryCompetition1() {
+        var competitionName = document.getElementById('competitionName').value;
+        axios.get('/competitions/findByName?name=' + competitionName)
+            .then(function (response) {
+                var resultContainer = document.getElementById('competitionResults');
+                if (response.data.code === 1) {
+                    var competitionData = response.data.data;
+                    resultContainer.innerHTML = JSON.stringify(response.data.data);
+                } else {
+                    resultContainer.innerHTML = ` < p > 查询失败: ${response.data.msg}</p>`;
+                }
+            })
+            .catch(function (error) {
+                console.error('查询失败', error);
+            });
+    }
+
+    // 根据主办方名称查询
+    function queryCompetitionBySponsor() {
+        var sponsorName = document.getElementById('sponsorName').value;
+        axios.get('/competitions/findBySponsor?sponsor=' + sponsorName)
+            .then(function (response) {
+                var resultContainer = document.getElementById('competitionResultss');
+                if (response.data.code === 1) {
+                    var competitionData = response.data.data;
+                    resultContainer.innerHTML = JSON.stringify(response.data.data);
+                } else {
+                    resultContainer.innerHTML = `<p>查询失败: ${response.data.msg}</p>`;
+                }
+            })
+            .catch(function (error) {
+                console.error('查询失败', error);
+            });
+    }
+</script>
+</body>
+</html>
+</html>

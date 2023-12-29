@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心</title>
+</head>
+<body>
+<header>
+    <div class="logo">
+        <img src="展示图.jpg" width="400" height="500" alt="系统log">
+    </div>
+    <nav>
+        <ul>
+            <li><a href="HomePage.html">首页</a></li>
+            <li><a href="SignUpForAMatch.html">参加比赛</a></li>
+            <li><a href="CompetitionManage.html">比赛管理</a></li>
+        </ul>
+    </nav>
+</header>
+<h1>个人中心</h1>
+<div id="userInfo">
+    <!-- 这里使用 JavaScript 动态显示个人信息 -->
+</div>
+
+<h2>个人信息修改</h2>
+<form id="updateForm">
+    <label for="name">姓名：</label>
+    <input type="text" id="name" name="name" required><br>
+
+    <label for="gender">性别：</label>
+    <select id="gender" name="gender" required>
+        <option value="男性">男性</option>
+        <option value="女性">女性</option>
+    </select><br>
+
+    <label for="email">邮箱：</label>
+    <input type="email" id="email" name="email" required><br>
+
+    <label for="phonenumber">电话号码：</label>
+    <input type="phonenumber" id="phonenumber" name="phonenumber" required><br>
+
+    <button type="submit">修改</button>
+</form>
+<h2>目前比赛中可参加的比赛个数</h2>
+<p id="competitionCount"></p>
+<h2>已参加的比赛</h2>
+<ul id="joinedCompetitions">
+    <!--    比赛-->
+</ul>
+
+<script src="/js/axios.min.js"></script>
+<script>
+    var token = localStorage.getItem('token');
+
+    function isValidToken(token) {
+        return token && token !== '';
+    }
+
+    // 设置Axios全局请求拦截器
+    axios.interceptors.request.use(function (config) {
+        if (isValidToken(token)) {
+            config.headers.Authorization = token;
+        } else {
+        }
+        return config;
+    }, function (error) {
+        return Promise.reject(error);
+    });
+
+
+    axios.get('/users/info')
+        .then(function (response) {
+            var userInfo = document.getElementById('userInfo');
+            var userData = response.data.data; // 获取用户数据
+
+            userInfo.innerHTML = `
+            <p>用户名：${userData.username}</p>
+            <p>个人ID：${userData.id}</p>
+            <p>性别：${userData.gender}</p>
+            <p>手机号：${userData.phonenumber}</p>
+            <p>角色：${userData.role}</p>
+            <p>创建时间：${userData.createTime}</p>
+            <p>更新时间：${userData.updateTime}</p>
+            <p>真实姓名：${userData.name}</p>
+            <p>邮箱：${userData.email}</p>
+            <p>头像：<img src="${userData.userImg}" alt="用户头像"></p>
+        `;
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    axios.get('/competitions/show')
+        .then(function (response) {
+            var joinedCompetitions = document.getElementById('joinedCompetitions');
+
+            if (response.data.code === 1) {
+                response.data.data.forEach(function (competition) {
+                    var listItem = document.createElement('li');
+                    var competitionInfo = `${competition.name} - ${competition.type} - ${competition.status}`;
+                    listItem.textContent = competitionInfo;
+                    joinedCompetitions.appendChild(listItem);
+                });
+            } else {
+                console.error('请求错误', response.data.msg);
+            }
+        })
+        .catch(function (error) {
+            console.error('获取参加比赛请求错误', error);
+        });
+
+    function submitForm(event) {
+        event.preventDefault(); // 防止默认提交
+
+        var formData = {
+            name: document.getElementById('name').value,
+            gender: document.getElementById('gender').value,
+            phonenumber: document.getElementById('phonenumber').value,
+            email: document.getElementById('email').value,
+        };
+
+        axios.put('/users/update', formData, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                alert('消息发送成功: ' + JSON.stringify(response.data.data));
+            })
+            .catch(error => {
+                alert('消息发送错误: ' + error.message);
+            });
+    }
+
+    // 事件监听
+    document.getElementById('updateForm').addEventListener('submit', submitForm);
+
+    // 获取用户可参加的比赛个数并展示到页面上
+    function getCompetitionCount() {
+        axios.get('/competitions/numbers')
+            .then(function (response) {
+                var count = response.data.data;
+                var competitionCount = document.getElementById('competitionCount');
+                competitionCount.textContent = '可参加的比赛个数：' + count;
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+    }
+
+    window.onload = function () {
+        getCompetitionCount();
+    }
+</script>
+</body>
+</html>

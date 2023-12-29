@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .register-form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .register-form h2 {
+            text-align: center;
+        }
+        .register-form input[type="text"],
+        .register-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .register-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .register-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .register-form .login-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .register-form .login-link a {
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <form class="register-form" action="/users/register" method="POST">
+        <h2>用户注册</h2>
+        <input type="text" name="username" placeholder="用户名" required>
+        <input type="password" name="password" placeholder="密码" required>
+        <select name="role">
+            <option value="1">普通用户</option>
+            <option value="2">管理员</option>
+        </select>
+        <button type="submit">注册</button>
+        <div class="login-link">
+            已有账号？<a href="login.html">点击登录</a>
+        </div>
+    </form>
+</div>
+<script src="/js/axios.min.js"></script>
+<script>
+    document.querySelector('.register-form').addEventListener('submit', function (event) {
+        event.preventDefault(); // 阻止表单默认提交行为
+        const username = document.querySelector('input[name="username"]').value;
+        const password = document.querySelector('input[name="password"]').value;
+        const role = document.querySelector('select[name="role"]').value; // 获取选择框的值
+        axios.post('/users/register', {username, password, role}) // 将选择框的值添加到请求中
+            .then(response => {
+                const {data} = response;
+                if (data.code === 1) {
+                    alert('注册成功');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(`注册失败，原因：${data.msg}`);
+                }
+            })
+            .catch(error => {
+                console.error('请求失败', error);
+                alert('请求失败');
+            });
+    });
+    axios.interceptors.request.use(function (config) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+</script>
+</body>
+</html>
